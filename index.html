@@ -1,210 +1,150 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Forma Siete</title>
-    <style>
-        /* --- Reset & Layout --- */
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000000;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        #stage {
-            width: 500px;
-            height: 500px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden; /* Clips the image when sliding out */
-            position: relative;
-        }
-
-        #tangram-img {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: auto;
-            pointer-events: none;
-            user-select: none;
-            -webkit-user-drag: none;
-            will-change: transform, opacity; /* Optimizes performance */
-        }
-
-        /* --- Animations --- */
-        
-        /* 1. Slide UP (Next) */
-        .anim-slide-out-up {
-            animation: slideOutUp 0.3s forwards ease-in;
-        }
-        .anim-slide-in-up {
-            animation: slideInUp 0.3s forwards ease-out;
-        }
-
-        /* 2. Slide DOWN (Prev) */
-        .anim-slide-out-down {
-            animation: slideOutDown 0.3s forwards ease-in;
-        }
-        .anim-slide-in-down {
-            animation: slideInDown 0.3s forwards ease-out;
-        }
-
-        /* Keyframes */
-        @keyframes slideOutUp {
-            to { transform: translateY(-100%); opacity: 0; }
-        }
-        @keyframes slideInUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        @keyframes slideOutDown {
-            to { transform: translateY(100%); opacity: 0; }
-        }
-        @keyframes slideInDown {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-    </style>
-</head>
-<body>
-
-    <div id="stage">
-        <img id="tangram-img" src="imgs/0000.png" alt="Forma Siete">
-    </div>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFT | Tangram Sequential Specimen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // --- Configuration ---
-        const maxSequence = 21; // Images 000 to 021
-        
-        // --- State ---
-        let currentIndex = 0;
-        let isColored = 0; // 0 or 1
-        let isAnimating = false; // Prevents spamming swipes
-
-        const imgElement = document.getElementById('tangram-img');
-
-        // --- Core Logic ---
-
-        function getFilename(index, colorState) {
-            const sequenceString = String(index).padStart(3, '0');
-            return `imgs/${sequenceString}${colorState}.png`;
-        }
-
-        // --- Navigation with Animation ---
-
-        function navigate(direction) {
-            if (isAnimating) return;
-            isAnimating = true;
-
-            // Calculate Next Index (with Loop)
-            let nextIndex;
-            if (direction === 'next') {
-                nextIndex = currentIndex >= maxSequence ? 0 : currentIndex + 1;
-            } else {
-                nextIndex = currentIndex <= 0 ? maxSequence : currentIndex - 1;
-            }
-
-            // Determine Animation Classes
-            const outClass = direction === 'next' ? 'anim-slide-out-up' : 'anim-slide-out-down';
-            const inClass = direction === 'next' ? 'anim-slide-in-up' : 'anim-slide-in-down';
-
-            // Step 1: Slide Out Old Image
-            imgElement.className = ''; // Reset classes
-            imgElement.classList.add(outClass);
-
-            // Wait for animation to finish (300ms matches CSS)
-            setTimeout(() => {
-                // Step 2: Swap Source
-                currentIndex = nextIndex;
-                imgElement.src = getFilename(currentIndex, isColored);
-
-                // Step 3: Slide In New Image
-                imgElement.className = ''; // Remove out class
-                imgElement.classList.add(inClass);
-
-                // Step 4: Cleanup after entry
-                setTimeout(() => {
-                    imgElement.className = '';
-                    isAnimating = false;
-                }, 300);
-
-                // Preload adjacent for smoothness
-                preloadNeighbors();
-
-            }, 300); 
-        }
-
-        // Just toggle color (No slide animation, happens instantly)
-        function toggleColor() {
-            isColored = isColored === 0 ? 1 : 0;
-            imgElement.src = getFilename(currentIndex, isColored);
-        }
-
-        function preloadNeighbors() {
-            const next = currentIndex >= maxSequence ? 0 : currentIndex + 1;
-            const prev = currentIndex <= 0 ? maxSequence : currentIndex - 1;
-            new Image().src = getFilename(next, isColored);
-            new Image().src = getFilename(prev, isColored);
-            new Image().src = getFilename(currentIndex, isColored === 0 ? 1 : 0);
-        }
-
-        // --- Interaction Handlers ---
-
-        // 1. CLICK / TAP to Toggle Color
-        document.body.addEventListener('click', (e) => {
-            // Check if user is scrolling/swiping vs tapping
-            // (Simple implementation: click always toggles color)
-            if(!isAnimating) toggleColor();
-        });
-
-        // 2. SWIPE (Touch) logic
-        let touchStartY = 0;
-        let touchEndY = 0;
-
-        document.addEventListener('touchstart', (e) => {
-            touchStartY = e.changedTouches[0].screenY;
-        }, {passive: false});
-
-        document.addEventListener('touchend', (e) => {
-            touchEndY = e.changedTouches[0].screenY;
-            handleSwipe();
-        }, {passive: false});
-
-        function handleSwipe() {
-            const sensitivity = 50; 
-            const distance = touchEndY - touchStartY;
-
-            if (Math.abs(distance) > sensitivity) {
-                // If it's a swipe, cancel the click/color toggle that might fire
-                // (Note: Browsers usually handle this, but logic separates navigation from toggle)
-                
-                if (distance < 0) {
-                    // Swiped UP -> Next Image
-                    navigate('next');
-                } else {
-                    // Swiped DOWN -> Prev Image
-                    navigate('prev');
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        neon: { 500: '#ff0098', 600: '#cc007a' },
+                        neutral: { 50: '#fafafa', 900: '#171717' }
+                    },
+                    fontFamily: {
+                        sans: ['Barlow', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    }
                 }
             }
         }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;700;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Barlow', sans-serif; }
+        .bg-grid {
+            background-image: linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.03;
+        }
+        .text-stroke-black { -webkit-text-stroke: 1px #171717; color: transparent; }
+        .shadow-hard-xl { box-shadow: 16px 16px 0px 0px #171717; }
+        .glitch-hover:hover { text-shadow: 2px 0 #00ffff, -2px 0 #ff0098; }
+        #shape-display { transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s ease; }
+    </style>
+</head>
+<body class="overflow-hidden bg-neutral-50 text-neutral-900 selection:bg-neon-500">
 
-        // 3. DESKTOP WHEEL logic
-        window.addEventListener('wheel', (e) => {
-            if (e.deltaY > 0) navigate('next');
-            else navigate('prev');
+    <div class="fixed inset-0 bg-grid pointer-events-none"></div>
+
+    <header class="fixed top-0 w-full p-8 flex justify-between items-start z-50">
+        <div class="flex gap-4">
+            <div class="w-10 h-10 bg-black text-white flex items-center justify-center font-bold relative">
+                F <span class="absolute -bottom-1 -left-1 w-2 h-2 bg-neon-500"></span>
+            </div>
+            <h1 class="font-black text-xl uppercase leading-tight tracking-tighter">
+                Tangram<br>Sequential_Lib
+            </h1>
+        </div>
+        <div class="font-mono text-[10px] text-right uppercase tracking-widest text-neutral-400">
+            <div>Asset_Path: <span class="text-black">/svg/</span></div>
+            <div>Mode: <span id="state-label" class="text-neon-500 font-bold">FILLED</span></div>
+        </div>
+    </header>
+
+    <main class="h-screen w-full flex flex-col items-center justify-center relative z-10">
+        
+        <div class="absolute w-96 h-96 bg-neon-500 rounded-full blur-[100px] opacity-10 animate-pulse"></div>
+
+        <div class="relative group cursor-pointer" onclick="toggleState()">
+            <div class="bg-white border-2 border-black p-12 md:p-20 shadow-hard-xl group-hover:shadow-[16px_16px_0px_0px_#ff0098] transition-all duration-300">
+                <img id="shape-display" src="svg/000.svg" alt="Tangram Asset" class="w-64 h-64 md:w-80 md:h-80 object-contain">
+            </div>
+
+            <div class="absolute -top-4 -left-4 bg-neon-500 text-white px-2 py-1 font-mono text-[10px] uppercase">
+                ID_<span id="current-id">000</span>
+            </div>
+            <div class="absolute -bottom-4 -right-4 bg-black text-white px-4 py-2 font-black text-xs uppercase glitch-hover tracking-tighter">
+                Toggle_Segments
+            </div>
+        </div>
+
+        <nav class="mt-20 flex items-center gap-12">
+            <button onclick="navigate(-1)" class="w-14 h-14 border-2 border-black hover:bg-black hover:text-white transition-all flex items-center justify-center font-bold">
+                ←
+            </button>
+            
+            <div class="text-center">
+                <span id="display-index" class="text-7xl font-black italic tracking-tighter">00</span>
+                <div class="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">Sequence_Step</div>
+            </div>
+
+            <button onclick="navigate(1)" class="w-14 h-14 border-2 border-black hover:bg-black hover:text-white transition-all flex items-center justify-center font-bold">
+                →
+            </button>
+        </nav>
+    </main>
+
+    <footer class="fixed bottom-0 w-full p-8 flex justify-between items-end z-50 pointer-events-none">
+        <div class="font-mono text-[9px] text-neutral-400 space-y-1">
+            <p>RESOLUTION: VECTOR_SCALABLE</p>
+            <p>ENGINE: SYSTEM_1.1_TRANSITION</p>
+        </div>
+        <div class="pointer-events-auto">
+            <a href="https://formayfondotaller.com/" target="_blank" class="text-xs font-bold hover:text-neon-500 underline decoration-2">FORMAYFONDO.COM</a>
+        </div>
+    </footer>
+
+    <script>
+        let currentFigure = 0; // The base index (0, 1, 2... 10, 11)
+        let isSegmented = 0;   // The state bit (0 or 1)
+        const totalFigures = 10; // Adjust as you add more files
+
+        const img = document.getElementById('shape-display');
+        const idLabel = document.getElementById('current-id');
+        const indexDisplay = document.getElementById('display-index');
+        const stateLabel = document.getElementById('state-label');
+
+        function updateAsset() {
+            img.style.opacity = '0';
+            img.style.transform = 'translateY(10px) scale(0.95)';
+
+            setTimeout(() => {
+                // Formatting: figure number (2 digits) + state (1 digit)
+                // e.g., Figure 9 Filled = "090", Figure 10 Segmented = "101"
+                const figureStr = currentFigure.toString().padStart(2, '0');
+                const fileName = `${figureStr}${isSegmented}`;
+                
+                img.src = `svg/${fileName}.svg`;
+                idLabel.innerText = fileName;
+                indexDisplay.innerText = figureStr;
+                stateLabel.innerText = isSegmented ? "SEGMENTED" : "FILLED";
+
+                img.style.opacity = '1';
+                img.style.transform = 'translateY(0) scale(1)';
+            }, 250);
+        }
+
+        function navigate(direction) {
+            currentFigure += direction;
+            if (currentFigure < 0) currentFigure = totalFigures - 1;
+            if (currentFigure >= totalFigures) currentFigure = 0;
+            updateAsset();
+        }
+
+        function toggleState() {
+            isSegmented = isSegmented === 0 ? 1 : 0;
+            updateAsset();
+        }
+
+        // Global Listeners
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') navigate(1);
+            if (e.key === 'ArrowLeft') navigate(-1);
+            if (e.key === ' ') toggleState();
         });
-
     </script>
 </body>
 </html>
