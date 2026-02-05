@@ -2,114 +2,74 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FFT | Scrollable Specimen Reel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FFT | Specimen Reel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        neon: { 500: '#ff0098', 600: '#cc007a' },
-                        neutral: { 50: '#fafafa', 900: '#171717' }
-                    },
-                    fontFamily: {
-                        sans: ['Barlow', 'sans-serif'],
-                        mono: ['Fira Code', 'monospace'],
-                    }
+                    colors: { neon: { 500: '#ff0098' } },
+                    fontFamily: { sans: ['Barlow', 'sans-serif'], mono: ['Fira Code', 'monospace'] }
                 }
             }
         }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;700;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Barlow', sans-serif; background-color: #fafafa; overflow: hidden; }
-        .bg-grid {
-            background-image: linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px);
-            background-size: 40px 40px;
-            opacity: 0.03;
-        }
-        .shadow-hard { box-shadow: 16px 16px 0px 0px #171717; }
-        .shadow-neon { box-shadow: 16px 16px 0px 0px #ff0098; }
-
-        /* Native Scroll Container */
-        #viewing-window {
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE/Edge */
-            scroll-snap-type: y mandatory;
-        }
-        #viewing-window::-webkit-scrollbar { display: none; } /* Chrome/Safari */
-
-        .specimen-slot {
-            scroll-snap-align: center;
-            scroll-snap-stop: always;
-        }
-
-        .frame-impact { animation: impact 0.2s ease-out; }
-        @keyframes impact {
-            0% { transform: translate(0, 0); box-shadow: 16px 16px 0px 0px #171717; }
-            50% { transform: translate(8px, 8px); box-shadow: 0px 0px 0px 0px #171717; }
-            100% { transform: translate(0, 0); box-shadow: 16px 16px 0px 0px #171717; }
-        }
-        .fade-img { transition: opacity 0.2s ease; }
+        body { font-family: 'Barlow', sans-serif; background-color: #fafafa; touch-action: none; overflow: hidden; }
+        .bg-grid { background-image: linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px); background-size: 40px 40px; opacity: 0.03; }
+        .shadow-hard { box-shadow: 12px 12px 0px 0px #171717; }
+        #main-frame { transition: box-shadow 0.2s; }
     </style>
 </head>
-<body class="bg-neutral-50 text-neutral-900">
-
+<body class="bg-neutral-50 text-neutral-900 select-none">
     <div class="fixed inset-0 bg-grid pointer-events-none"></div>
 
-    <header class="fixed top-0 w-full p-8 lg:p-12 flex justify-between items-start z-50">
-        <div class="space-y-2">
-            <div class="w-10 h-10 bg-black text-white flex items-center justify-center font-bold relative">
-                F <span class="absolute -bottom-1 -left-1 w-3 h-3 bg-neon-500"></span>
+    <header class="fixed top-0 w-full p-6 md:p-12 flex justify-between items-start z-50">
+        <div class="space-y-1">
+            <div class="w-8 h-8 bg-black text-white flex items-center justify-center font-bold relative text-sm">
+                F <span class="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-neon-500"></span>
             </div>
-            <h1 class="font-black text-3xl uppercase leading-none tracking-tighter">
+            <h1 class="font-black text-xl md:text-3xl uppercase leading-none tracking-tighter">
                 TANGRAM<br><span class="text-neon-500">SEQUENTIAL_LIB</span>
             </h1>
         </div>
-        
-        <div class="text-right font-mono text-[10px] tracking-widest text-neutral-400 uppercase">
-            <p>Input: Touch/Scroll/Keys</p>
+        <div class="text-right font-mono text-[8px] md:text-[10px] tracking-widest text-neutral-400 uppercase">
+            <p>Input: Touch/Scroll</p>
             <p>ID: <span id="ref-id" class="text-black font-bold">000</span></p>
             <p>State: <span id="state-label" class="text-neon-500">FILLED</span></p>
         </div>
     </header>
 
-    <main class="h-screen w-full flex flex-col items-center justify-center relative z-10 p-6">
-        <div class="relative group">
-            <div id="main-frame" class="bg-white border-2 border-black p-10 md:p-14 shadow-hard group-hover:shadow-neon transition-all duration-300 overflow-hidden">
-                
-                <div id="viewing-window" class="w-[280px] h-[280px] md:w-[480px] md:h-[480px] overflow-y-scroll relative" onclick="toggleState()">
-                    <div id="specimen-track" class="flex flex-col w-full">
-                        </div>
+    <main class="h-screen w-full flex flex-col items-center justify-center relative z-10 p-4">
+        <div class="relative">
+            <div id="main-frame" class="bg-white border-2 border-black p-4 md:p-10 shadow-hard overflow-hidden">
+                <div id="touch-zone" class="w-[70vw] h-[70vw] md:w-[450px] md:h-[450px] flex items-center justify-center cursor-pointer">
+                    <img id="main-specimen" src="svg/000.svg" class="w-full h-full object-contain" alt="Specimen">
                 </div>
-
             </div>
 
-            <div class="absolute -top-4 -left-4 bg-neon-500 text-white px-3 py-1 font-mono text-[10px] uppercase shadow-hard">
-                Structure_Core
-            </div>
-            <div class="absolute -bottom-4 -right-4 bg-black text-white px-4 py-2 font-black text-[10px] uppercase tracking-tighter pointer-events-none">
-                Toggle: Tap_Window
-            </div>
+            <div class="absolute -top-3 -left-3 bg-neon-500 text-white px-2 py-1 font-mono text-[9px] uppercase shadow-hard">Structure_Core</div>
+            <div class="absolute -bottom-3 -right-3 bg-black text-white px-3 py-1.5 font-black text-[9px] uppercase tracking-tighter">Toggle: Tap</div>
         </div>
 
-        <nav class="mt-16 text-center">
+        <nav class="mt-12 md:mt-16 text-center">
             <div class="flex flex-col items-center">
-                <span id="display-index" class="text-6xl font-black italic tracking-tighter leading-none">00</span>
-                <div class="h-1.5 w-24 bg-black mt-2"></div>
-                <p class="font-mono text-[9px] text-neutral-400 mt-4 tracking-widest uppercase">Scroll_to_Explore</p>
+                <span id="display-index" class="text-5xl md:text-6xl font-black italic tracking-tighter leading-none">00</span>
+                <div class="h-1.5 w-16 md:w-24 bg-black mt-2"></div>
+                <p class="font-mono text-[8px] text-neutral-400 mt-4 tracking-widest uppercase">Swipe to Explore</p>
             </div>
         </nav>
     </main>
 
-    <footer class="fixed bottom-0 w-full p-8 flex justify-between items-end z-50 pointer-events-none">
-        <div class="font-mono text-[9px] text-neutral-400 space-y-1 uppercase tracking-widest">
-            <p>Motion: Snap_Scroll_Vertical</p>
+    <footer class="fixed bottom-0 w-full p-6 md:p-12 flex justify-between items-end z-50 pointer-events-none">
+        <div class="font-mono text-[8px] text-neutral-400 space-y-0.5 uppercase tracking-widest">
+            <p>Motion: Sequential_Jump</p>
             <p>System: Industrial_Brutalism</p>
         </div>
         <div class="pointer-events-auto">
-            <a href="https://formayfondotaller.com/" target="_blank" class="text-xs font-bold uppercase tracking-tighter hover:text-neon-500 border-b-2 border-black">FFT_SYSTEM</a>
+            <a href="https://formayfondotaller.com/" target="_blank" class="text-[10px] font-bold uppercase tracking-tighter hover:text-neon-500 border-b-2 border-black">FFT_SYSTEM</a>
         </div>
     </footer>
 
@@ -117,75 +77,59 @@
         let currentIdx = 0;
         let isSegmented = 0;
         const totalFigures = 10;
-
-        const track = document.getElementById('specimen-track');
-        const windowEl = document.getElementById('viewing-window');
-        const frame = document.getElementById('main-frame');
+        
+        const imgDisplay = document.getElementById('main-specimen');
         const stateLabel = document.getElementById('state-label');
         const refIdLabel = document.getElementById('ref-id');
         const indexDisplay = document.getElementById('display-index');
+        const touchZone = document.getElementById('touch-zone');
 
-        function init() {
-            track.innerHTML = '';
-            for (let i = 0; i < totalFigures; i++) {
-                const slot = document.createElement('div');
-                slot.className = 'specimen-slot w-full h-[280px] md:h-[480px] flex-shrink-0 flex items-center justify-center p-4';
-                
-                const img = document.createElement('img');
-                img.id = `img-${i}`;
-                img.src = `svg/${i.toString().padStart(2, '0')}${isSegmented}.svg`;
-                img.className = 'w-full h-full object-contain fade-img';
-                
-                slot.appendChild(img);
-                track.appendChild(slot);
-            }
-        }
-
-        function triggerImpact() {
-            frame.classList.remove('frame-impact');
-            void frame.offsetWidth;
-            frame.classList.add('frame-impact');
-        }
-
-        function toggleState() {
-            isSegmented = isSegmented === 0 ? 1 : 0;
-            triggerImpact();
+        function updateDisplay() {
+            const idStr = currentIdx.toString().padStart(2, '0');
+            imgDisplay.src = `svg/${idStr}${isSegmented}.svg`;
             
-            for (let i = 0; i < totalFigures; i++) {
-                const img = document.getElementById(`img-${i}`);
-                img.style.opacity = '0';
-                setTimeout(() => {
-                    img.src = `svg/${i.toString().padStart(2, '0')}${isSegmented}.svg`;
-                    img.style.opacity = '1';
-                }, 150);
-            }
+            indexDisplay.innerText = idStr;
+            refIdLabel.innerText = `${idStr}${isSegmented}`;
             stateLabel.innerText = isSegmented ? "SEGMENTED" : "FILLED";
-            refIdLabel.innerText = `${currentIdx.toString().padStart(2, '0')}${isSegmented}`;
         }
 
-        // Handle native scroll detection
-        windowEl.addEventListener('scroll', () => {
-            const newIdx = Math.round(windowEl.scrollTop / windowEl.clientHeight);
-            if (newIdx !== currentIdx) {
-                currentIdx = newIdx;
-                indexDisplay.innerText = currentIdx.toString().padStart(2, '0');
-                refIdLabel.innerText = `${currentIdx.toString().padStart(2, '0')}${isSegmented}`;
-                triggerImpact();
-            }
+        // Toggle Logic
+        touchZone.addEventListener('click', () => {
+            isSegmented = isSegmented === 0 ? 1 : 0;
+            updateDisplay();
         });
 
-        // Key/Button navigation logic
-        function scrollToIndex(idx) {
-            windowEl.scrollTo({ top: idx * windowEl.clientHeight, behavior: 'smooth' });
+        // Navigation Logic (Wrap around)
+        function navigate(direction) {
+            currentIdx += direction;
+            if (currentIdx >= totalFigures) currentIdx = 0;
+            if (currentIdx < 0) currentIdx = totalFigures - 1;
+            updateDisplay();
         }
 
+        // Touch Handling (Swipes)
+        let touchStartY = 0;
+        window.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, false);
+        window.addEventListener('touchend', e => {
+            const touchEndY = e.changedTouches[0].clientY;
+            const diff = touchStartY - touchEndY;
+            if (Math.abs(diff) > 50) navigate(diff > 0 ? 1 : -1);
+        }, false);
+
+        // Scroll Wheel Handling
+        window.addEventListener('wheel', e => {
+            navigate(e.deltaY > 0 ? 1 : -1);
+        }, { passive: true });
+
+        // Keyboard Handling
         window.addEventListener('keydown', e => {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') scrollToIndex(Math.min(currentIdx + 1, totalFigures - 1));
-            if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') scrollToIndex(Math.max(currentIdx - 1, 0));
-            if (e.key === ' ') { e.preventDefault(); toggleState(); }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') navigate(1);
+            if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') navigate(-1);
+            if (e.key === ' ') { e.preventDefault(); isSegmented = isSegmented === 0 ? 1 : 0; updateDisplay(); }
         });
 
-        document.addEventListener('DOMContentLoaded', init);
+        // Initialize
+        updateDisplay();
     </script>
 </body>
 </html>
